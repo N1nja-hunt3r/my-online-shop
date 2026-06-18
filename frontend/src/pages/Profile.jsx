@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import useAuth from "../context/AuthContext";
 
 function Profile() {
@@ -10,7 +10,14 @@ function Profile() {
       <p><strong>Name:</strong> {user.name}</p>
       <p><strong>Email:</strong> {user.email}</p>
       <p><strong>Phone:</strong> {user.phone}</p>
-      <button onClick={() => { logout(); }} style={{ padding: "10px 24px", background: "#e74c3c", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", marginTop: 16 }} type="button">Logout</button>
+      <Link to="/orders" style={{
+        display: "inline-block", padding: "10px 24px", background: "#667eea", color: "#fff",
+        border: "none", borderRadius: 6, cursor: "pointer", marginTop: 16, textDecoration: "none",
+      }}>My Orders</Link>
+      <button onClick={() => { logout(); }} style={{
+        padding: "10px 24px", background: "#e74c3c", color: "#fff", border: "none",
+        borderRadius: 6, cursor: "pointer", marginLeft: 10,
+      }} type="button">Logout</button>
     </div>
   );
 }

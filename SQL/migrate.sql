@@ -22,3 +22,6 @@ CREATE TABLE wishlist (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   UNIQUE KEY unique_wishlist_item (user_id, product_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Add product_data to order_items and drop FK on products
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS product_data JSON AFTER price;

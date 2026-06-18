@@ -36,4 +36,17 @@ $conn->query("
 ");
 $steps[] = 'Created wishlist table (with product_data, no products FK)';
 
+// 4. Add product_data to order_items and drop FK on products
+$fk2 = $conn->query("SELECT CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = '" . DB_NAME . "' AND TABLE_NAME = 'order_items' AND COLUMN_NAME = 'product_id' AND REFERENCED_TABLE_NAME IS NOT NULL LIMIT 1");
+if ($fk2 && $row2 = $fk2->fetch_assoc()) {
+    $conn->query("ALTER TABLE order_items DROP FOREIGN KEY `{$row2['CONSTRAINT_NAME']}`");
+    $steps[] = 'Dropped FK constraint on order_items.product_id';
+}
+
+$col2 = $conn->query("SHOW COLUMNS FROM order_items LIKE 'product_data'");
+if ($col2 && $col2->num_rows === 0) {
+    $conn->query("ALTER TABLE order_items ADD COLUMN product_data JSON AFTER price");
+    $steps[] = 'Added product_data column to order_items';
+}
+
 jsonResponse(['success' => true, 'message' => 'Migration completed', 'steps' => $steps]);

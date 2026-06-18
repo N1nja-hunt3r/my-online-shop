@@ -18,6 +18,9 @@ import Support from './pages/Support';
 import CustomerCare from './pages/CustomerCare';
 import Profile from './pages/Profile';
 import ProductDetails from './pages/ProductDetails';
+import Checkout from './pages/Checkout';
+import OrderConfirmation from './pages/OrderConfirmation';
+import Orders from './pages/Orders';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -42,6 +45,9 @@ function App() {
               <Route path="/customer-care" element={<CustomerCare />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/order-confirmation" element={<OrderConfirmation />} />
+              <Route path="/orders" element={<Orders />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Footer />

@@ -1,10 +1,14 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useCart from "../context/CartContext";
+import useAuth from "../context/AuthContext";
 import ImageViewer from "../components/ImageViewer";
 import "./Cart.css";
 
 function Cart() {
   const [viewImg, setViewImg] = useState(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { cart, removeCart, increase, decrease, clearCart, totalPrice } = useCart();
 
   if (cart.length === 0) return <div className="cart-page"><h1>Cart</h1><p className="cart-empty">Your cart is empty.</p></div>;
@@ -39,7 +43,7 @@ function Cart() {
       </div>
       <div className="cart-summary">
         <h3>Total: ₹{totalPrice.toLocaleString()}</h3>
-        <button className="checkout-btn" type="button">Proceed to Checkout</button>
+        <button className="checkout-btn" type="button" onClick={() => navigate(user ? "/checkout" : "/login")}>Proceed to Checkout</button>
       </div>
       {viewImg && <ImageViewer src={viewImg} onClose={() => setViewImg(null)} />}
     </div>

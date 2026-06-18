@@ -34,7 +34,7 @@ function Navbar() {
           <NavLink to="/cart" className="nav-cart" onClick={cls}>Cart{totalItems > 0 && <span className="badge">{totalItems}</span>}</NavLink>
           <NavLink to="/wishlist" className="nav-wishlist" onClick={cls}>Wishlist{wishlist.length > 0 && <span className="badge">{wishlist.length}</span>}</NavLink>
           {user ? (
-            <><NavLink to="/profile" onClick={cls}>Profile</NavLink><button className="logout-btn" onClick={logout} type="button">Logout</button></>
+            <><NavLink to="/orders" onClick={cls}>Orders</NavLink><NavLink to="/profile" onClick={cls}>Profile</NavLink><button className="logout-btn" onClick={logout} type="button">Logout</button></>
           ) : (
             <NavLink to="/login" onClick={cls}>Login</NavLink>
           )}
