@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ShopEase - Viva Documentation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #fff; color: #222; line-height: 1.6; padding: 20px; }
+  h1 { font-size: 28px; border-bottom: 3px solid #667eea; padding-bottom: 8px; margin-bottom: 20px; color: #1a1a2e; }
+  h2 { font-size: 22px; margin: 30px 0 10px; color: #667eea; border-left: 4px solid #667eea; padding-left: 12px; }
+  h3 { font-size: 18px; margin: 20px 0 8px; color: #2d2d44; }
+  p { margin: 6px 0; }
+  pre { background: #1e1e2e; color: #cdd6f4; padding: 12px 16px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 10px 0; }
+  code { background: #f0f0f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+  pre code { background: none; padding: 0; }
+  ul { margin: 8px 0 8px 24px; }
+  li { margin: 4px 0; }
+  .highlight { background: #fef9e7; border-left: 4px solid #f1c40f; padding: 10px 14px; margin: 10px 0; border-radius: 4px; }
+  .file-path { font-family: monospace; background: #e8e8f0; padding: 4px 10px; border-radius: 4px; font-size: 14px; color: #555; }
+  .tag { display: inline-block; background: #667eea; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 12px; margin-right: 6px; }
+  .tag-new { background: #27ae60; }
+  .tag-modified { background: #e67e22; }
+  .tag-frontend { background: #3498db; }
+  .tag-backend { background: #8e44ad; }
+  .tag-db { background: #e74c3c; }
+  table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+  th, td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; }
+  th { background: #667eea; color: #fff; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  .toc { background: #f5f5fa; padding: 16px 20px; border-radius: 8px; margin-bottom: 24px; }
+  .toc a { color: #667eea; text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  .page-break { page-break-before: always; }
+  @media print { body { padding: 0; } pre { font-size: 11px; } }
+</style>
+</head>
+<body>
+
+<h1>ShopEase E-Commerce Platform — Viva Documentation</h1>
+
+<div class="toc">
+  <strong>Table of Contents</strong>
+  <ol>
+    <li><a href="#arch">Architecture Overview</a></li>
+    <li><a href="#frontend">Frontend (React + Vite)</a></li>
+    <li><a href="#backend">Backend (PHP + MySQL)</a></li>
+    <li><a href="#db">Database Schema</a></li>
+    <li><a href="#context">Context Providers (Auth, Cart, Wishlist)</a></li>
+    <li><a href="#auth">Authentication Flow</a></li>
+    <li><a href="#cart">Cart Flow (API + localStorage)</a></li>
+    <li><a href="#wishlist">Wishlist Flow</a></li>
+    <li><a href="#products">Products &amp; Product Details</a></li>
+    <li><a href="#migration">Database Migration</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="arch">1. Architecture Overview</h2>
+
+<p>ShopEase is a <strong>full-stack e-commerce application</strong> with three tiers:</p>
+<ul>
+  <li><strong>Frontend</strong>: React 19 + Vite + React Router v7 (port 5173)</li>
+  <li><strong>Backend API</strong>: PHP 8+ built-in server (port 8000)</li>
+  <li><strong>Database</strong>: MySQL 8.4 (Windows service, auto-start)</li>
+</ul>
+
+<p>The <code>npm run dev</code> command runs all three services concurrently using the <code>concurrently</code> npm package:</p>
+<pre>concurrently --names "VITE,PHP,MYSQL" "vite" "php -S localhost:8000 -t ../backend ../backend/router.php" "..."</pre>
+
+<p>Each service gets a named prefix (<code>[VITE]</code>, <code>[PHP]</code>, <code>[MYSQL]</code>) for clear terminal output.</p>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="frontend">2. Frontend — Key Files</h2>
+
+<h3>2.1 <code>App.jsx</code> — Root Component</h3>
+<p>The root component wraps the entire application in providers and sets up routing:</p>
+<pre>&lt;BrowserRouter&gt;
+  &lt;AuthProvider&gt;
+    &lt;CartProvider&gt;
+      &lt;WishlistProvider&gt;
+        &lt;Navbar /&gt;
+        &lt;Routes&gt;...15 routes...&lt;/Routes&gt;
+        &lt;Footer /&gt;
+      &lt;/WishlistProvider&gt;
+    &lt;/CartProvider&gt;
+  &lt;/AuthProvider&gt;
+&lt;/BrowserRouter&gt;</pre>
+<p><strong>Key point</strong>: Provider nesting order matters — <code>CartProvider</code> and <code>WishlistProvider</code> call <code>useAuth()</code> internally, so they must be children of <code>AuthProvider</code>.</p>
+
+<h3>2.2 <code>Navbar.jsx</code> — Navigation Bar</h3>
+<p>Imports all three context hooks (<code>useAuth</code>, <code>useCart</code>, <code>useWishlist</code>) to show dynamic badge counts:</p>
+<ul>
+  <li><strong>Cart badge</strong>: <code>totalItems &gt; 0 &amp;&amp; &lt;span className="badge"&gt;{totalItems}&lt;/span&gt;</code></li>
+  <li><strong>Wishlist badge</strong>: <code>wishlist.length &gt; 0 &amp;&amp; &lt;span className="badge"&gt;{wishlist.length}&lt;/span&gt;</code></li>
+  <li><strong>Auth state</strong>: Shows Profile + Logout when logged in; Login link when not</li>
+  <li><strong>Search</strong>: Navigates to <code>/products?q=searchTerm</code></li>
+</ul>
+<p>Using Context instead of localStorage hooks eliminates the stale badge problem — all components share one state instance.</p>
+
+<h3>2.3 <code>Login.jsx</code> — Login Page</h3>
+<p>Uses <code>useAuth().login</code> which makes an async fetch to the PHP backend:</p>
+<pre>const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
+  if (!email || !password) return setError("All fields are required.");
+  setLoading(true);
+  const result = await login(email, password);
+  setLoading(false);
+  result.ok ? navigate("/") : setError(result.message);
+};</pre>
+<p>Key states: <code>loading</code> (shows "Logging in..." text + disables button), <code>error</code> (shows auth-error paragraph), and redirect on success.</p>
+<p>The button's <code>disabled={loading}</code> prevents double-submission.</p>
+
+<h3>2.4 <code>Register.jsx</code> — Registration Page</h3>
+<p>Same pattern as Login but collects name, email, phone, password, confirm password:</p>
+<ul>
+  <li>Validates all fields required, password ≥ 6 chars, passwords match</li>
+  <li>Calls <code>useAuth().register(name, email, phone, password)</code></li>
+  <li>On success: navigates to <code>/login</code> so user can log in immediately</li>
+</ul>
+
+<h3>2.5 <code>Products.jsx</code> — Product Listing with Filters</h3>
+<p>Features:</p>
+<ul>
+  <li><strong>Search</strong>: Filters by name/brand (case-insensitive)</li>
+  <li><strong>Sort</strong>: Price low-to-high, high-to-low, or by rating</li>
+  <li><strong>Brand filter</strong>: Dynamically populated from <code>[...new Set(products.map(p =&gt; p.brand))]</code></li>
+  <li><strong>Price range</strong>: 0-25k, 25k-50k, 50k-1L, above 1L</li>
+  <li><strong>Rating filter</strong>: Any, 4+, 4.5+</li>
+</ul>
+<p>Uses <code>useSearchParams</code> to read search query from URL (set by Navbar search).</p>
+
+<h3>2.6 <code>ProductDetails.jsx</code> — Product Details Page (<span class="tag tag-new">NEW</span>)</h3>
+<p>Route: <code>/product/:id</code></p>
+<p>Finds product by ID from static data, then renders:</p>
+<ol>
+  <li>Back link to Products page</li>
+  <li>Product name (h1)</li>
+  <li><strong>Specs table</strong>: Uses <code>Object.entries(product.specs)</code> to render key-value pairs:</li>
+</ol>
+<pre>&lt;table className="specs-table"&gt;
+  &lt;tbody&gt;
+    {Object.entries(product.specs).map(([key, value]) =&gt; (
+      &lt;tr key={key}&gt;
+        &lt;td className="spec-key"&gt;{key}&lt;/td&gt;
+        &lt;td className="spec-value"&gt;{value}&lt;/td&gt;
+      &lt;/tr&gt;
+    ))}
+  &lt;/tbody&gt;
+&lt;/table&gt;</pre>
+<ol start="4">
+  <li><strong>Customer reviews</strong>: Static sample data rendered as cards with star ratings</li>
+</ol>
+<p>Handles not-found case: shows "Product not found" + back link.</p>
+
+<h3>2.7 <code>ProductCard.jsx</code> — Product Card Component</h3>
+<p>Renders a single product with:</p>
+<ul>
+  <li><strong>Image</strong>: Clickable to open ImageViewer; fallback on error</li>
+  <li><strong>Discount badge</strong>: Shows e.g. "-10%" if discount &gt; 0</li>
+  <li><strong>Wishlist button</strong>: Toggle heart icon (active/inactive)</li>
+  <li><strong>Rating</strong>: Star characters + numeric value</li>
+  <li><strong>Price</strong>: Discounted price (strikethrough original)</li>
+  <li><strong>View Details</strong>: Link to <code>/product/:id</code></li>
+  <li><strong>Add to Cart</strong>: Calls onAddToCart prop from context</li>
+</ul>
+
+<h3>2.8 <code>Cart.jsx</code> — Cart Page</h3>
+<p>Features:</p>
+<ul>
+  <li><strong>Empty state</strong>: Shows "Your cart is empty" message</li>
+  <li><strong>Item list</strong>: Image (clickable → ImageViewer), name, brand, discount price, quantity controls (+/-), line total, remove button</li>
+  <li><strong>Summary</strong>: Total price + "Proceed to Checkout" button</li>
+  <li>Uses <code>useCart()</code> for all operations</li>
+</ul>
+
+<h3>2.9 <code>Wishlist.jsx</code> — Wishlist Page</h3>
+<p>Same pattern as Cart: empty state, grid of items with image viewer, discount price, remove button. Uses <code>useWishlist()</code>.</p>
+
+<h3>2.10 <code>ImageViewer.jsx</code> — Lightbox Component</h3>
+<p>Full-screen image overlay with:</p>
+<ul>
+  <li>Click overlay or ✕ button to close</li>
+  <li><strong>Escape key</strong> listener via <code>useEffect</code> with keydown event</li>
+</ul>
+<pre>useEffect(() => {
+  const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+  document.addEventListener("keydown", handleKey);
+  return () => document.removeEventListener("keydown", handleKey);
+}, [onClose]);</pre>
+
+<h3>2.11 <code>Hero.jsx</code> — Banner/Slider</h3>
+<p>Auto-rotating banner with 3 slides, 3-second interval:</p>
+<pre>const [current, setCurrent] = useState(0);
+useEffect(() => {
+  const timer = setInterval(() => setCurrent((p) => (p + 1) % banners.length), 3000);
+  return () => clearInterval(timer);
+}, []);</pre>
+<ul>
+  <li>Only <code>current</code> slide has <code>active</code> class (CSS opacity/transition)</li>
+  <li>Dot indicators at bottom — clickable to jump to slide</li>
+  <li>Each slide has "Shop Now" and "Offers" buttons</li>
+</ul>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="context">3. Context Providers — State Management</h2>
+
+<h3>3.1 <code>AuthContext.jsx</code> (<span class="tag tag-modified">MODIFIED</span>)</h3>
+<p>Manages authentication state using React Context + localStorage persistence:</p>
+<pre>const [user, setUser] = useState(() =>
+  JSON.parse(localStorage.getItem("currentUser") || "null")
+);</pre>
+<p>The <strong>lazy initializer</strong> reads from localStorage so user survives page refresh without an API call.</p>
+
+<p><strong>register()</strong> — sends POST to <code>http://localhost:8000/api/register.php</code>:</p>
+<pre>const res = await fetch(`${API}/api/register.php`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name, email, phone, password }),
+});
+const data = await res.json();
+if (data.success) return { ok: true, message: data.message };
+return { ok: false, message: data.error || "Registration failed" };</pre>
+<p>Returns <code>{ok, message}</code> — doesn't auto-login after registration (user goes to /login).</p>
+
+<p><strong>login()</strong> — sends POST to <code>http://localhost:8000/api/login.php</code>:</p>
+<pre>if (data.success) {
+  setUser(data.user);   // saves {id, name, email, phone}
+  return { ok: true };
+}</pre>
+<p>On success, sets <code>user</code> state which triggers <code>useEffect</code> to persist to localStorage. The <code>logout</code> function simply calls <code>setUser(null)</code>.</p>
+
+<div class="page-break"></div>
+
+<h3>3.2 <code>CartContext.jsx</code> (<span class="tag tag-modified">MODIFIED</span>)</h3>
+<p>Dual-mode cart: uses <strong>backend API when logged in</strong>, <strong>localStorage when not</strong>.</p>
+
+<p><strong>Key design decision</strong>: Since static <code>products.js</code> (25 items, IDs 1-25) and DB products (19 items, IDs 1-19) have completely different data, we can't use <code>product_id</code> as a foreign key. Instead, we <strong>store the full product object as JSON</strong> in the <code>product_data</code> column.</p>
+
+<p><strong>On mount / user change</strong>:</p>
+<pre>useEffect(() => {
+  if (user) {
+    const local = JSON.parse(localStorage.getItem("cart") || "[]");
+    syncCartToAPI(user.id, local).then(() => {
+      localStorage.removeItem("cart");
+      fetchCart(user.id, setCart);
+    });
+  } else {
+    setCart(JSON.parse(localStorage.getItem("cart") || "[]"));
+  }
+}, [user?.id]);</pre>
+<p>When user logs in (<code>user?.id</code> changes from null to a value), it uploads any local items to the API, clears localStorage, then fetches the server cart.</p>
+
+<p><strong>addToCart()</strong>:</p>
+<pre>const addToCart = useCallback((product) => {
+  if (user) {
+    apiCall("POST", { product_id: product.id, quantity: 1, product_data: product });
+  } else {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) return prev.map((item) =>
+        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+      );
+      return [...prev, { ...product, qty: 1 }];
+    });
+  }
+}, [user, apiCall]);</pre>
+
+<p><strong>apiCall()</strong> — generic helper that sends HTTP requests and refetches:</p>
+<pre>const apiCall = useCallback(async (method, extra) => {
+  if (!user) return;
+  await fetch(`${API}/api/cart.php`, {
+    method, headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ user_id: user.id, ...extra }),
+  });
+  fetchCart(user.id, setCart);  // refetch to sync
+}, [user]);</pre>
+
+<p><strong>Derived values</strong> (computed on every render, not stored in state):</p>
+<pre>const totalItems = cart.reduce((sum, item) => sum + (item.qty || 1), 0);
+const totalPrice = cart.reduce((sum, item) =>
+  sum + (item.qty || 1) * (item.price - (item.price * item.discount) / 100), 0
+);</pre>
+
+<div class="page-break"></div>
+
+<h3>3.3 <code>WishlistContext.jsx</code> (<span class="tag tag-modified">MODIFIED</span>)</h3>
+<p>Same dual-mode pattern as CartContext. Key differences:</p>
+<ul>
+  <li><strong>toggleWishlist()</strong> — adds if not present, removes if present (toggle behavior)</li>
+  <li>POST to <code>/api/wishlist.php</code> returns <code>{inWishlist: true/false}</code></li>
+  <li>No quantity needed (wishlist items don't have quantity)</li>
+</ul>
+<pre>const toggleWishlist = useCallback((product) => {
+  if (user) {
+    fetch(`${API}/api/wishlist.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: user.id, product_id: product.id, product_data: product }),
+    })
+      .then(r => r.json())
+      .then(d => { if (d.success) fetchWishlist(user.id, setWishlist); });
+  } else {
+    setWishlist(prev => {
+      const exists = prev.find(item => item.id === product.id);
+      if (exists) return prev.filter(item => item.id !== product.id);
+      return [...prev, product];
+    });
+  }
+}, [user]);</pre>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="backend">4. Backend — PHP API</h2>
+
+<h3>4.1 <code>router.php</code> — URL Router</h3>
+<p>The PHP built-in server (<code>php -S localhost:8000 -t ../backend ../backend/router.php</code>) uses this router to handle all requests:</p>
+<pre>$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+if ($uri === '/' || $uri === '') {
+  require __DIR__ . '/index.php';  // API root
+  return true;
+}
+
+$file = __DIR__ . $uri;
+if (file_exists($file) && pathinfo($file, PATHINFO_EXTENSION) === 'php') {
+  require $file;  // serve .php files directly
+  return true;
+}
+
+http_response_code(404);
+echo json_encode(['error' => 'Not found']);
+return true;</pre>
+<p>This allows clean URLs like <code>/api/login.php</code> instead of <code>/api/login.php?foo=bar</code>.</p>
+
+<h3>4.2 <code>helpers.php</code> — Shared Utilities</h3>
+<p>Every API file includes this:</p>
+<ul>
+  <li><strong>CORS headers</strong>: Allow requests from <code>http://localhost:5173</code> (Vite dev server)</li>
+  <li><strong>OPTIONS preflight</strong>: Return 200 for CORS preflight requests</li>
+  <li><strong>getJsonInput()</strong>: Reads JSON from request body: <code>json_decode(file_get_contents('php://input'), true) ?? []</code></li>
+  <li><strong>jsonResponse($data)</strong>: Echo JSON + exit</li>
+  <li><strong>errorResponse($msg, $code)</strong>: Set HTTP status + JSON error + exit</li>
+  <li>Includes <code>db.php</code> for database connection</li>
+</ul>
+
+<h3>4.3 <code>db.php</code> — Database Config</h3>
+<pre>define('DB_HOST', 'localhost');
+define('DB_USER', 'root');
+define('DB_PASS', 'N1nja_Hunt3r');
+define('DB_NAME', 'shopease');
+
+function getConnection() {
+  $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+  if ($conn->connect_error) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database connection failed: ' . $conn->connect_error]);
+    exit;
+  }
+  $conn->set_charset('utf8mb4');
+  return $conn;
+}</pre>
+<p>MySQL credentials: <code>root</code> / <code>N1nja_Hunt3r</code>, database <code>shopease</code>.</p>
+
+<div class="page-break"></div>
+
+<h3>4.4 <code>login.php</code> — Login Endpoint (<span class="tag tag-new">NEW</span>)</h3>
+<pre>$data = getJsonInput();
+$email = trim($data['email'] ?? '');
+$password = $data['password'] ?? '';
+
+$stmt = $conn->prepare("SELECT id, name, email, password, phone FROM users WHERE email = ?");
+$stmt->bind_param('s', $email);
+$stmt->execute();
+$result = $stmt->get_result();
+
+$user = $result->fetch_assoc();
+if (!password_verify($password, $user['password'])) errorResponse('Invalid email or password');
+
+jsonResponse([
+  'success' => true,
+  'user' => ['id' => $user['id'], 'name' => $user['name'], 'email' => $user['email'], 'phone' => $user['phone']]
+]);</pre>
+<p>Uses <strong>prepared statements</strong> (prevents SQL injection) and <strong>password_verify()</strong> (bcrypt). Returns user object without the password hash.</p>
+
+<h3>4.5 <code>register.php</code> — Registration Endpoint (<span class="tag tag-new">NEW</span>)</h3>
+<pre>// Check if email already exists
+$check = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$check->bind_param('s', $email);
+$check->execute();
+$check->store_result();
+if ($check->num_rows > 0) errorResponse('Email already registered');
+
+// Hash password and insert
+$hashed = password_hash($password, PASSWORD_DEFAULT);
+$stmt = $conn->prepare("INSERT INTO users (name, email, password, phone) VALUES (?, ?, ?, ?)");
+$stmt->bind_param('ssss', $name, $email, $hashed, $phone);</pre>
+<p><strong>Security features</strong>: bcrypt hashing (<code>password_hash</code> with <code>PASSWORD_DEFAULT</code>), prepared statements, email uniqueness check, email format validation, minimum password length.</p>
+
+<div class="page-break"></div>
+
+<h3>4.6 <code>cart.php</code> — Cart API (<span class="tag tag-modified">REWRITTEN</span>)</h3>
+<p>Supports 4 HTTP methods with <code>product_data</code> JSON storage:</p>
+<table>
+  <tr><th>Method</th><th>Action</th><th>SQL</th></tr>
+  <tr><td>GET</td><td>Fetch user's cart</td><td>SELECT product_id, quantity, product_data FROM cart WHERE user_id = ?</td></tr>
+  <tr><td>POST</td><td>Add item (or increase qty)</td><td>INSERT ... ON DUPLICATE KEY UPDATE quantity = quantity + ?</td></tr>
+  <tr><td>PUT</td><td>Update quantity</td><td>UPDATE cart SET quantity = ?, product_data = ? WHERE user_id = ? AND product_id = ?</td></tr>
+  <tr><td>DELETE</td><td>Remove item</td><td>DELETE FROM cart WHERE user_id = ? AND product_id = ?</td></tr>
+</table>
+
+<p><strong>GET response</strong> merges <code>product_data</code> with <code>id</code> and <code>qty</code>:</p>
+<pre>foreach ($rows as $row) {
+  $pd = json_decode($row['product_data'], true) ?: [];
+  $items[] = array_merge($pd, [
+    'id'  => (int)$row['product_id'],
+    'qty' => (int)$row['quantity'],
+  ]);
+}</pre>
+<p>The frontend receives items with all original product fields (<code>name</code>, <code>price</code>, <code>discount</code>, <code>image</code>, etc.) plus <code>id</code> and <code>qty</code>.</p>
+
+<h3>4.7 <code>wishlist.php</code> — Wishlist API (<span class="tag tag-new">NEW</span>)</h3>
+<p>Same pattern as cart but:</p>
+<ul>
+  <li><strong>POST</strong> is a toggle: checks if item exists → removes if yes, adds if no</li>
+  <li>Response includes <code>inWishlist: true/false</code></li>
+  <li>No quantity column</li>
+</ul>
+<pre>// Check if already exists
+$check = $conn->prepare("SELECT id FROM wishlist WHERE user_id = ? AND product_id = ?");
+$check->bind_param('ii', $userId, $productId);
+$check->execute();
+$check->store_result();
+
+if ($check->num_rows > 0) {
+  // Remove (toggle off)
+  $del = $conn->prepare("DELETE FROM wishlist WHERE user_id = ? AND product_id = ?");
+  $del->bind_param('ii', $userId, $productId);
+  $del->execute();
+  jsonResponse(['success' => true, 'message' => 'Removed from wishlist!', 'inWishlist' => false]);
+}
+
+// Add
+$stmt = $conn->prepare("INSERT INTO wishlist (user_id, product_id, product_data) VALUES (?, ?, ?)");
+$stmt->bind_param('iis', $userId, $productId, json_encode($productData));
+$stmt->execute() ? jsonResponse(['success' => true, 'message' => 'Added to wishlist!', 'inWishlist' => true]);</pre>
+
+<h3>4.8 <code>products.php</code> — Products API</h3>
+<p>Dynamic query builder with filters:</p>
+<pre>if (!empty($_GET['category']))    { $where[] = 'category = ?';    $params[] = $_GET['category'];    $types .= 's'; }
+if (!empty($_GET['brand']))       { $where[] = 'brand = ?';       $params[] = $_GET['brand'];       $types .= 's'; }
+if (!empty($_GET['max_price']))   { $where[] = 'price <= ?';      $params[] = (float)$_GET['max_price']; $types .= 'd'; }
+if (!empty($_GET['search'])) {
+  $term = '%' . $_GET['search'] . '%';
+  $where[] = '(name LIKE ? OR brand LIKE ?)';
+  $params[] = $term; $params[] = $term; $types .= 'ss';
+}</pre>
+<p>Dynamic SQL via <code>match()</code> for sort, optional LIMIT. Currently not used by frontend (still uses static <code>products.js</code>).</p>
+
+<div class="page-break"></div>
+
+<h3>4.9 <code>migrate.php</code> — Migration Endpoint (<span class="tag tag-new">NEW</span>)</h3>
+<p>One-time script that prepares the database for the new cart/wishlist API:</p>
+<p><strong>Step 1</strong>: Drop FK constraint on cart.product_id<br>
+Queries <code>INFORMATION_SCHEMA</code> to find the auto-generated FK name, then drops it.</p>
+<p><strong>Step 2</strong>: Add <code>product_data</code> JSON column to cart table (if not exists).</p>
+<p><strong>Step 3</strong>: Drop old wishlist table and recreate with <code>product_data</code> column and no FK on products.</p>
+<pre>POST http://localhost:8000/api/migrate.php
+Response: {"success":true,"steps":["Dropped FK constraint...","Added product_data column...","Created wishlist table..."]}</pre>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="db">5. Database Schema</h2>
+
+<h3>5.1 Tables</h3>
+<table>
+  <tr><th>Table</th><th>Purpose</th><th>Key Columns</th></tr>
+  <tr><td>users</td><td>User accounts</td><td>id, name, email (UNIQUE), password (bcrypt hash), phone, address</td></tr>
+  <tr><td>products</td><td>Product catalog (DB version)</td><td>id, name, brand, category, price, discount, rating, specifications (JSON), image, stock</td></tr>
+  <tr><td>cart</td><td>Shopping cart</td><td>id, user_id (FK→users), product_id, quantity, product_data (JSON)</td></tr>
+  <tr><td>wishlist</td><td>Wishlist</td><td>id, user_id (FK→users), product_id, product_data (JSON)</td></tr>
+  <tr><td>orders</td><td>Orders</td><td>id, user_id, total_amount, gst, status, address</td></tr>
+  <tr><td>order_items</td><td>Order line items</td><td>id, order_id (FK→orders), product_id, quantity, price</td></tr>
+  <tr><td>messages</td><td>Contact form</td><td>id, name, email, subject, message</td></tr>
+  <tr><td>newsletter</td><td>Newsletter subscribers</td><td>id, email (UNIQUE)</td></tr>
+</table>
+
+<h3>5.2 Cart table — Key Change</h3>
+<p>Before migration:</p>
+<pre>product_id INT NOT NULL,
+FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE</pre>
+<p>After migration:</p>
+<pre>product_id INT NOT NULL,           -- FK constraint removed
+product_data JSON AFTER quantity   -- stores full product object</pre>
+<p>This was necessary because the <strong>static products.js</strong> (used by the frontend) and the <strong>DB products table</strong> have completely different data with different IDs.</p>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="auth">6. Authentication Flow</h2>
+
+<p>The authentication system uses a <strong>chained flow</strong> between frontend and backend:</p>
+
+<pre>
+User enters credentials → Login.jsx → AuthContext.login() → fetch POST /api/login.php
+                                                                    ↓
+                                                      PHP: query user by email
+                                                      PHP: password_verify()
+                                                      PHP: return {success, user}
+                                                                    ↓
+                                                      AuthContext: setUser(user)
+                                                      → localStorage.setItem("currentUser", ...)
+                                                      → CartContext syncs local→API
+                                                      → WishlistContext syncs local→API
+                                                                    ↓
+                                                      Login.jsx: navigate("/")
+</pre>
+
+<p><strong>Security features</strong>:</p>
+<ul>
+  <li>Passwords hashed with <code>password_hash(PASSWORD_DEFAULT)</code> = bcrypt</li>
+  <li>All SQL uses prepared statements (no string interpolation)</li>
+  <li>No password hash returned to frontend — only id, name, email, phone</li>
+  <li>CORS restricted to <code>localhost:5173</code></li>
+</ul>
+
+<p><strong>Session persistence</strong>: The user object is stored in localStorage under key <code>currentUser</code>. On app mount, <code>AuthContext</code> reads it with a lazy initializer:</p>
+<pre>const [user, setUser] = useState(() =>
+  JSON.parse(localStorage.getItem("currentUser") || "null")
+);</pre>
+<p>This means a page refresh doesn't log the user out — they stay logged in until they click Logout (or localStorage is cleared).</p>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="cart-wishlist">7. Cart &amp; Wishlist — Data Flow</h2>
+
+<p>Both cart and wishlist use the same dual-mode architecture:</p>
+
+<h3>Mode 1: Logged In → API</h3>
+<pre>
+addToCart(product)
+  → fetch POST /api/cart.php
+      body: { user_id, product_id, quantity, product_data: { id, name, price, image, ... } }
+  → PHP inserts into cart table (ON DUPLICATE KEY UPDATE quantity+1)
+  → Frontend refetches GET /api/cart.php?user_id=N
+  → Cart state updates with merged product + qty fields
+</pre>
+
+<h3>Mode 2: Not Logged In → localStorage</h3>
+<pre>
+addToCart(product)
+  → React state update: [...prev, { ...product, qty: 1 }]
+  → useEffect saves to localStorage: localStorage.setItem("cart", JSON.stringify(cart))
+</pre>
+
+<h3>Login Transition (Sync)</h3>
+<pre>
+User logs in → [user?.id] changes from null to value
+
+CartContext.useEffect:
+  1. Read localStorage cart items
+  2. syncCartToAPI(): POST each item to /api/cart.php
+  3. localStorage.removeItem("cart")
+  4. fetchCart(): GET /api/cart.php?user_id=N
+  5. setCart(API response)
+</pre>
+
+<p>This ensures that items added while not logged in are preserved when the user logs in.</p>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="files">8. All Modified &amp; New Files</h2>
+
+<table>
+  <tr><th>File</th><th>Status</th><th>Description</th></tr>
+  <tr><td><code>frontend/src/context/AuthContext.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Async login/register via PHP API, localStorage persistence</td></tr>
+  <tr><td><code>frontend/src/context/CartContext.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Dual-mode: API when logged in, localStorage fallback</td></tr>
+  <tr><td><code>frontend/src/context/WishlistContext.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Dual-mode toggle wishlist with API sync</td></tr>
+  <tr><td><code>frontend/src/pages/ProductDetails.jsx</code></td><td><span class="tag tag-new">NEW</span></td><td>Product details with specs table + reviews</td></tr>
+  <tr><td><code>frontend/src/pages/Login.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Async form with loading/error states, API integration</td></tr>
+  <tr><td><code>frontend/src/pages/Register.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Registration with validation + async API call</td></tr>
+  <tr><td><code>frontend/src/components/Navbar.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Context-based badge counts for cart/wishlist</td></tr>
+  <tr><td><code>frontend/src/pages/Cart.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Uses CartContext instead of localStorage hook</td></tr>
+  <tr><td><code>frontend/src/pages/Wishlist.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Uses WishlistContext instead of localStorage hook</td></tr>
+  <tr><td><code>frontend/src/pages/Products.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Uses context hooks for cart/wishlist actions</td></tr>
+  <tr><td><code>frontend/src/pages/CategoryPage.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Uses context hooks for cart/wishlist actions</td></tr>
+  <tr><td><code>frontend/src/pages/Profile.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Reads user from AuthContext, logout button</td></tr>
+  <tr><td><code>frontend/src/components/ProductCard.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Added "View Details" link to /product/:id</td></tr>
+  <tr><td><code>frontend/src/components/ImageViewer.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Escape key listener in useEffect</td></tr>
+  <tr><td><code>frontend/src/App.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Provider nesting (Auth→Cart→Wishlist), ProductDetails route</td></tr>
+  <tr><td><code>frontend/src/components/Hero.jsx</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Banner slider with 3s auto-rotation</td></tr>
+  <tr><td><code>frontend/src/data/products.js</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Added specs field to all 25 products</td></tr>
+  <tr><td><code>frontend/src/styles/global.css</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>CSS custom properties for dark theme</td></tr>
+  <tr><td><code>frontend/src/hooks/useAuth.js</code></td><td><span class="tag tag-new">DELETED</span></td><td>Replaced by AuthContext</td></tr>
+  <tr><td><code>frontend/src/hooks/useCart.js</code></td><td><span class="tag tag-new">DELETED</span></td><td>Replaced by CartContext</td></tr>
+  <tr><td><code>frontend/src/hooks/useWishlist.js</code></td><td><span class="tag tag-new">DELETED</span></td><td>Replaced by WishlistContext</td></tr>
+  <tr><td colspan="3"></td></tr>
+  <tr><td><code>backend/api/login.php</code></td><td><span class="tag tag-new">NEW</span></td><td>Login with bcrypt password_verify</td></tr>
+  <tr><td><code>backend/api/register.php</code></td><td><span class="tag tag-new">NEW</span></td><td>Registration with bcrypt password_hash</td></tr>
+  <tr><td><code>backend/api/cart.php</code></td><td><span class="tag tag-modified">REWRITTEN</span></td><td>Full CRUD with product_data JSON storage</td></tr>
+  <tr><td><code>backend/api/wishlist.php</code></td><td><span class="tag tag-new">NEW</span></td><td>Toggle wishlist with CRUD</td></tr>
+  <tr><td><code>backend/api/migrate.php</code></td><td><span class="tag tag-new">NEW</span></td><td>DB migration script (FK drop, column add, table create)</td></tr>
+  <tr><td><code>backend/api/products.php</code></td><td><span class="tag tag-new">NEW</span></td><td>Dynamic product queries with filters</td></tr>
+  <tr><td><code>backend/includes/helpers.php</code></td><td><span class="tag tag-new">NEW</span></td><td>CORS headers, JSON I/O helpers, DB include</td></tr>
+  <tr><td><code>backend/config/db.php</code></td><td><span class="tag tag-new">NEW</span></td><td>MySQL connection config (root/N1nja_Hunt3r)</td></tr>
+  <tr><td><code>backend/router.php</code></td><td><span class="tag tag-new">NEW</span></td><td>PHP built-in server URL router</td></tr>
+  <tr><td colspan="3"></td></tr>
+  <tr><td><code>SQL/ecommerce.sql</code></td><td><span class="tag tag-modified">MODIFIED</span></td><td>Full schema with 8 tables, 19 sample products</td></tr>
+  <tr><td><code>SQL/migrate.sql</code></td><td><span class="tag tag-new">NEW</span></td><td>Reference SQL for cart/wishlist migration</td></tr>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ============================================================ -->
+<h2 id="qa">9. Common Viva Questions &amp; Answers</h2>
+
+<div class="highlight">
+  <strong>Q: Why did you switch from hooks (useAuth.js) to Context API?</strong><br>
+  <strong>A:</strong> The old hooks created independent instances of state in each component that imported them. The Navbar badge count was stale because it didn't share the same state as the Cart/Wishlist pages. Context provides a single shared state instance — every consumer gets the same data. This also simplifies the architecture: one Provider at the root, and any component can call <code>useCart()</code> etc.
+</div>
+
+<div class="highlight">
+  <strong>Q: How does the cart sync work when a user logs in?</strong><br>
+  <strong>A:</strong> The <code>useEffect</code> in CartContext watches <code>user?.id</code>. When it changes from null to a value (login), it reads localStorage, uploads each item to the PHP API via <code>POST /api/cart.php</code>, clears localStorage, then fetches the server cart. This merges any items added while not logged in with the server state.
+</div>
+
+<div class="highlight">
+  <strong>Q: Why store product_data as JSON instead of using a foreign key?</strong><br>
+  <strong>A:</strong> The frontend uses static <code>products.js</code> (25 items with IDs 1-25) while the database has separate products (19 items with different IDs starting from 1). They don't match, so a foreign key on <code>product_id</code> would fail. Storing the full product snapshot as JSON in <code>product_data</code> means the cart/wishlist are self-contained and don't depend on product IDs matching between frontend and backend.
+</div>
+
+<div class="highlight">
+  <strong>Q: Explain the security measures in authentication.</strong><br>
+  <strong>A:</strong> Three layers: (1) Passwords are hashed with <code>password_hash(PASSWORD_DEFAULT)</code> which uses bcrypt — never stored in plain text. (2) All SQL uses prepared statements with <code>bind_param()</code> — this prevents SQL injection because parameters are sent separately from the query. (3) The API never returns the password hash to the frontend — only id, name, email, phone.
+</div>
+
+<div class="highlight">
+  <strong>Q: How does the banner/slider animation work?</strong><br>
+  <strong>A:</strong> The Hero component uses <code>useState</code> for the current slide index (0, 1, or 2) and <code>useEffect</code> with <code>setInterval</code> at 3000ms (3 seconds). The interval increments the index modulo the number of banners. Each slide div has a conditional <code>active</code> class — CSS handles the opacity transition. Dot indicators at the bottom are clickable and call <code>setCurrent(i)</code> directly.
+</div>
+
+<div class="highlight">
+  <strong>Q: What does the PHP router do?</strong><br>
+  <strong>A:</strong> The PHP built-in server's router file intercepts all requests. If the URI corresponds to an existing .php file (like <code>/api/login.php</code>), it requires that file. If it's the root (<code>/</code>), it shows the API status. Otherwise, it returns a 404 JSON response. This enables clean API URLs without a traditional web server like Apache.
+</div>
+
+<div class="highlight">
+  <strong>Q: How does the image viewer component work?</strong><br>
+  <strong>A:</strong> ImageViewer renders a full-screen overlay with the clicked image. A <code>useEffect</code> registers a <code>keydown</code> event listener that calls <code>onClose()</code> when Escape is pressed. Clicking the overlay background or the ✕ button also closes it. Clicking the image itself calls <code>e.stopPropagation()</code> to prevent the overlay click from closing it.
+</div>
+
+<p style="text-align:center; margin-top:40px; color:#999;">— End of Documentation —</p>
+
+</body>
+</html>

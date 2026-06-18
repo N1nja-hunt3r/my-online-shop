@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import products from "../data/products";
 import ProductCard from "../components/ProductCard";
-import useCart from "../hooks/useCart";
-import useWishlist from "../hooks/useWishlist";
+import useCart from "../context/CartContext";
+import useWishlist from "../context/WishlistContext";
 import "./Products.css";
 
 function Products() {
@@ -64,10 +64,10 @@ function Products() {
             <label>Price Range</label>
             <select value={price} onChange={(e) => setPrice(e.target.value)}>
               <option value="">All Prices</option>
-              <option value="0-25000">Under \u20B925,000</option>
-              <option value="25000-50000">\u20B925,000 - \u20B950,000</option>
-              <option value="50000-100000">\u20B950,000 - \u20B91,00,000</option>
-              <option value="100000-">Above \u20B91,00,000</option>
+              <option value="0-25000">Under ₹25,000</option>
+              <option value="25000-50000">₹25,000 - ₹50,000</option>
+              <option value="50000-100000">₹50,000 - ₹1,00,000</option>
+              <option value="100000-">Above ₹1,00,000</option>
             </select>
           </div>
           <div className="filter-group">

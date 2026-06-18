@@ -1,4 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -14,29 +17,37 @@ import Offers from './pages/Offers';
 import Support from './pages/Support';
 import CustomerCare from './pages/CustomerCare';
 import Profile from './pages/Profile';
+import ProductDetails from './pages/ProductDetails';
 import NotFound from './pages/NotFound';
 
 function App() {
   return (
     <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/category/:category" element={<CategoryPage />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/offers" element={<Offers />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/customer-care" element={<CustomerCare />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      <Footer />
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/category/:category" element={<CategoryPage />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/wishlist" element={<Wishlist />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/offers" element={<Offers />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/customer-care" element={<CustomerCare />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/product/:id" element={<ProductDetails />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+            <Footer />
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

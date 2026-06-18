@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
+import useAuth from "../context/AuthContext";
 import "./Login.css";
 
 function Register() {
@@ -10,16 +10,20 @@ function Register() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { register } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     if (!name || !email || !phone || !password || !confirm) return setError("All fields are required.");
     if (password.length < 6) return setError("Password must be at least 6 characters.");
     if (password !== confirm) return setError("Passwords do not match.");
-    register(name, email, phone, password) ? navigate("/login") : setError("Email already registered.");
+    setLoading(true);
+    const result = await register(name, email, phone, password);
+    setLoading(false);
+    result.ok ? navigate("/login") : setError(result.message);
   };
 
   return (
@@ -33,7 +37,7 @@ function Register() {
           <input type="tel" placeholder="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
           <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
           <input type="password" placeholder="Confirm Password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-          <button type="submit">Register</button>
+          <button type="submit" disabled={loading}>{loading ? "Creating account..." : "Register"}</button>
         </form>
         <p className="auth-link">Already have an account? <Link to="/login">Login</Link></p>
       </div>

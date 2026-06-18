@@ -1,5 +1,5 @@
 import { useState } from "react";
-import useWishlist from "../hooks/useWishlist";
+import useWishlist from "../context/WishlistContext";
 import ImageViewer from "../components/ImageViewer";
 import "./Wishlist.css";
 

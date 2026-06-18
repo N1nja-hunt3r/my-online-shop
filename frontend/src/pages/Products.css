@@ -20,11 +20,13 @@
 
 .search-input {
   padding: 10px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 15px;
   width: 300px;
   max-width: 100%;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .products-layout {
@@ -34,12 +36,13 @@
 }
 
 .filters {
-  background: #f9f9f9;
+  background: var(--bg-secondary);
   padding: 20px;
   border-radius: 8px;
   align-self: start;
   position: sticky;
   top: 80px;
+  border: 1px solid var(--border);
 }
 
 .filters h3 {
@@ -55,16 +58,18 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
 .filter-group select {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 14px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .products-grid {
@@ -77,7 +82,7 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 40px;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 

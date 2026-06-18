@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import ImageViewer from './ImageViewer';
 import './ProductCard.css';
 
 function ProductCard({ product, onAddToCart, onToggleWishlist, inWishlist }) {
   const [viewImg, setViewImg] = useState(null);
-  const { name, brand, price, discount, rating, image } = product;
+  const { id, name, brand, price, discount, rating, image } = product;
   const discounted = price - (price * discount) / 100;
 
   return (
@@ -26,6 +27,7 @@ function ProductCard({ product, onAddToCart, onToggleWishlist, inWishlist }) {
           <span className="current-price">₹{discounted.toLocaleString()}</span>
           {discount > 0 && <span className="original-price">₹{price.toLocaleString()}</span>}
         </div>
+        <Link to={`/product/${id}`} className="view-details-btn">View Details</Link>
         <button className="add-to-cart-btn" onClick={() => onAddToCart(product)} type="button">Add to Cart</button>
       </div>
     </div>

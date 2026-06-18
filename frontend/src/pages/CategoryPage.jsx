@@ -1,8 +1,8 @@
 import { useParams } from "react-router-dom";
 import products from "../data/products";
 import ProductCard from "../components/ProductCard";
-import useCart from "../hooks/useCart";
-import useWishlist from "../hooks/useWishlist";
+import useCart from "../context/CartContext";
+import useWishlist from "../context/WishlistContext";
 import "./Products.css";
 
 const labels = {

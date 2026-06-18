@@ -11,7 +11,7 @@
 .wishlist-empty {
   text-align: center;
   padding: 60px 0;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 18px;
 }
 
@@ -22,18 +22,18 @@
 }
 
 .wishlist-item {
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 16px;
   text-align: center;
-  background: #fff;
+  background: var(--card-bg);
 }
 
 .wishlist-item-img {
   width: 100%;
   aspect-ratio: 1 / 1;
   object-fit: cover;
-  background: #f9f9f9;
+  background: var(--bg-tertiary);
   border-radius: 6px;
   margin-bottom: 12px;
   cursor: pointer;
@@ -46,25 +46,29 @@
 
 .wishlist-brand {
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
   margin: 0 0 8px;
 }
 
 .wishlist-price {
   font-size: 16px;
   font-weight: 700;
-  color: #e74c3c;
+  color: var(--danger);
   margin: 0 0 12px;
 }
 
 .remove-wishlist-btn {
   padding: 8px 20px;
-  background: #ff4757;
+  background: var(--danger);
   color: #fff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+}
+
+.remove-wishlist-btn:hover {
+  background: var(--danger-hover);
 }
 
 @media (max-width: 480px) {

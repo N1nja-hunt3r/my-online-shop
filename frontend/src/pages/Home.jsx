@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import Hero from "../components/Hero";
 import products from "../data/products";
 import ProductCard from "../components/ProductCard";
-import useCart from "../hooks/useCart";
-import useWishlist from "../hooks/useWishlist";
+import useCart from "../context/CartContext";
+import useWishlist from "../context/WishlistContext";
 import "./Home.css";
 
 const categories = [
@@ -12,12 +12,6 @@ const categories = [
   { name: "AC", path: "/category/ac", icon: "\u2744\uFE0F" },
   { name: "Refrigerators", path: "/category/refrigerators", icon: "\uD83E\uDDCA" },
   { name: "Washing Machines", path: "/category/washing-machines", icon: "\uD83E\uDDFA" },
-];
-
-const reviews = [
-  { name: "Priya S.", text: "Amazing products! Got my laptop in 2 days.", rating: 5 },
-  { name: "Rahul K.", text: "Best prices online. Highly recommended!", rating: 4 },
-  { name: "Ananya M.", text: "Great customer support. Helped me with my order.", rating: 5 },
 ];
 
 function Home() {
@@ -60,18 +54,6 @@ function Home() {
       {renderSection("Trending Products", trending, "/products")}
       {renderSection("Best Sellers", bestSeller, "/products")}
       {renderSection("Deals of the Day", deals)}
-      <section className="section reviews-section">
-        <h2>What Our Customers Say</h2>
-        <div className="reviews-grid">
-          {reviews.map((r, i) => (
-            <div key={i} className="review-card">
-              <div className="review-stars">{'\u2605'.repeat(r.rating)}</div>
-              <p className="review-text">"{r.text}"</p>
-              <p className="review-name">- {r.name}</p>
-            </div>
-          ))}
-        </div>
-      </section>
       <section className="section newsletter-section">
         <h2>Subscribe to Our Newsletter</h2>
         <p>Get the latest deals and offers straight to your inbox.</p>

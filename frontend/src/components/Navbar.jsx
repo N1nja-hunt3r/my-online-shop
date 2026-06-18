@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import useCart from '../hooks/useCart';
-import useWishlist from '../hooks/useWishlist';
-import useAuth from '../hooks/useAuth';
+import useCart from '../context/CartContext';
+import useWishlist from '../context/WishlistContext';
+import useAuth from '../context/AuthContext';
 import './Navbar.css';
 
 function Navbar() {

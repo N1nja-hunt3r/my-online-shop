@@ -142,7 +142,7 @@ INSERT INTO products (name, brand, category, subcategory, price, discount, ratin
  '{"Processor":"AMD Ryzen 5 5500U","RAM":"8GB DDR4","Storage":"256GB SSD","Display":"15.6 inch HD","OS":"Windows 11","Battery":"2-cell 35WHr"}',
  'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400', 60),
 
-('MSI Titan GT77', 'MSI', 'laptops', 'gaming', 1,20999, 8, 4.7,
+('MSI Titan GT77', 'MSI', 'laptops', 'gaming', 120999, 8, 4.7,
  'Ultimate gaming beast with 4K display and top-tier specs.',
  '{"Processor":"Intel Core i9-13th Gen","RAM":"32GB DDR5","Storage":"2TB NVMe","GPU":"NVIDIA RTX 4090","Display":"17.3 inch 4K 144Hz","OS":"Windows 11"}',
  'https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400', 15),

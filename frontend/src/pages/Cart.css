@@ -17,7 +17,7 @@
 
 .clear-btn {
   padding: 8px 16px;
-  background: #e74c3c;
+  background: var(--danger);
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -25,10 +25,14 @@
   font-size: 14px;
 }
 
+.clear-btn:hover {
+  background: var(--danger-hover);
+}
+
 .cart-empty {
   text-align: center;
   padding: 60px 0;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 18px;
 }
 
@@ -43,9 +47,9 @@
   align-items: center;
   gap: 16px;
   padding: 16px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--card-bg);
 }
 
 .cart-item img {
@@ -53,7 +57,7 @@
   height: 80px;
   object-fit: cover;
   border-radius: 6px;
-  background: #f9f9f9;
+  background: var(--bg-tertiary);
   cursor: pointer;
 }
 
@@ -68,14 +72,14 @@
 
 .cart-item-brand {
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
   margin: 0 0 4px;
 }
 
 .cart-item-price {
   font-size: 15px;
   font-weight: 600;
-  color: #e74c3c;
+  color: var(--danger);
   margin: 0;
 }
 
@@ -88,11 +92,12 @@
 .cart-qty button {
   width: 32px;
   height: 32px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  background: #f9f9f9;
+  background: var(--bg-tertiary);
   font-size: 16px;
   cursor: pointer;
+  color: var(--text-primary);
 }
 
 .cart-qty span {
@@ -113,19 +118,19 @@
   background: none;
   border: none;
   font-size: 18px;
-  color: #999;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 4px;
 }
 
 .remove-btn:hover {
-  color: #e74c3c;
+  color: var(--danger);
 }
 
 .cart-summary {
   margin-top: 24px;
   padding: 20px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   text-align: right;
 }
@@ -137,13 +142,17 @@
 
 .checkout-btn {
   padding: 12px 32px;
-  background: #667eea;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 6px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+}
+
+.checkout-btn:hover {
+  background: var(--accent-hover);
 }
 
 @media (max-width: 600px) {

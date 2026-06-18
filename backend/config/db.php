@@ -5,7 +5,7 @@
 
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');       // Change to your MySQL username
-define('DB_PASS', '');           // Change to your MySQL password
+define('DB_PASS', 'N1nja_Hunt3r');
 define('DB_NAME', 'shopease');
 
 /**
